@@ -1,0 +1,1 @@
+{"name":"cube-solver","version":"1.0.0","private":true,"scripts":{"sync":"cap sync","android":"cap open android","ios":"cap open ios"}}
