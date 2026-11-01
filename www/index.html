@@ -1,1 +1,512 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cube Solver</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0b0b0e"><link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f2f3f8;--card:#fff;--tx:#14161f;--mu:#6a6f80;--bd:#e3e5ee;--ac:#4f46e5;--ac2:#7c3aed;--acx:#fff;--sh:0 4px 20px rgba(30,30,80,.08);--ok:#16a34a;--er:#dc2626;--sf:#f6f7fb}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e0f15;--card:#181a24;--tx:#f1f2f8;--mu:#9a9fb3;--bd:#2a2d3b;--ac:#818cf8;--ac2:#a78bfa;--acx:#0e0f15;--sh:0 4px 20px rgba(0,0,0,.4);--sf:#1f2230}}
+:root[data-theme="dark"]{--bg:#0e0f15;--card:#181a24;--tx:#f1f2f8;--mu:#9a9fb3;--bd:#2a2d3b;--ac:#818cf8;--ac2:#a78bfa;--acx:#0e0f15;--sh:0 4px 20px rgba(0,0,0,.4);--sf:#1f2230}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:520px;margin:0 auto;padding:18px 16px 24px}
+[hidden]{display:none!important}
+header{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+.logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--ac),var(--ac2));display:grid;place-items:center;font-size:24px;box-shadow:var(--sh)}
+h1{font-size:22px;margin:0;letter-spacing:-.3px}header p{margin:0;color:var(--mu);font-size:13px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:var(--sh)}
+.lbl{font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--mu);margin:0 0 10px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:4px;margin-bottom:14px;box-shadow:var(--sh)}
+.seg button{border:0;background:transparent;color:var(--mu);padding:10px;border-radius:10px;font:inherit;font-weight:600;cursor:pointer;transition:.2s}
+.seg button.on{background:linear-gradient(135deg,var(--ac),var(--ac2));color:var(--acx);box-shadow:0 2px 10px rgba(79,70,229,.35)}
+.faces{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px}
+.fc{border:2px solid var(--bd);background:var(--sf);border-radius:14px;padding:6px 2px;font:inherit;font-size:11px;font-weight:600;color:var(--mu);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:.2s}
+.fc i{width:30px;height:30px;border-radius:9px;border:1px solid rgba(0,0,0,.25);background-size:cover;background-position:center;display:grid;place-items:center;font-style:normal;color:#fff;font-size:15px;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.fc.cur{border-color:var(--ac);color:var(--tx);transform:translateY(-2px)}
+.fc.done{border-color:var(--ok)}
+.hint{background:var(--sf);border-radius:14px;padding:12px 14px;font-size:14px;margin-bottom:12px}
+.hint b{display:block;font-size:15px;margin-bottom:2px}.hint span{color:var(--mu)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:14px;padding:13px 16px;font:inherit;font-weight:600;cursor:pointer;transition:.15s;flex:1}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:linear-gradient(135deg,var(--ac),var(--ac2));color:var(--acx);border:0;box-shadow:0 4px 14px rgba(79,70,229,.35)}
+.btn:disabled{opacity:.45;cursor:default;box-shadow:none}
+.btn input{display:none}
+.two{display:flex;gap:10px}
+.tip{font-size:12px;color:var(--mu);margin:10px 0 0}
+#net,#net2{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(9,1fr);gap:3px;max-width:400px;margin:0 auto}
+#net div,#net2 div{aspect-ratio:1;border-radius:6px;border:1px solid rgba(0,0,0,.3);transition:opacity .2s,transform .1s}
+#net2 div{border-radius:5px}
+#net div.edit{cursor:pointer}#net div.edit:active{transform:scale(.88)}
+.pal{display:flex;gap:10px;justify-content:center;margin:14px 0 6px}
+.pal button{width:40px;height:40px;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 2px var(--bd);cursor:pointer;transition:.15s}
+.pal button.on{box-shadow:0 0 0 3px var(--ac);transform:scale(1.12)}
+.chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.chip{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 8px 3px 4px;border-radius:99px;background:var(--sf);border:1px solid var(--bd)}
+.chip i{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.3)}
+.chip.bad{border-color:var(--er);color:var(--er)}.chip.good{border-color:var(--ok)}
+#msg{text-align:center;font-size:13px;color:var(--mu);margin-top:10px;min-height:19px}#msg.err{color:var(--er)}
+.bar{position:sticky;bottom:8px;display:flex;gap:10px;padding:10px;background:var(--card);border:1px solid var(--bd);border-radius:20px;box-shadow:0 8px 30px rgba(30,30,80,.18)}
+.bar .btn:first-child{flex:0 0 auto}
+.prog{height:8px;background:var(--sf);border-radius:9px;overflow:hidden;margin:6px 0 14px}
+.prog div{height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));width:0;transition:width .3s}
+.step{display:flex;justify-content:space-between;font-size:13px;color:var(--mu);font-weight:600}
+.mv{display:flex;align-items:center;justify-content:center;gap:14px;margin:8px 0}
+#big{font-size:84px;font-weight:800;line-height:1;letter-spacing:-2px;background:linear-gradient(135deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+#arrow{font-size:46px;color:var(--ac)}
+#desc{text-align:center;font-size:15px;margin-bottom:14px;min-height:46px}#desc small{display:block;color:var(--mu);font-size:13px}
+#list{display:flex;gap:6px;overflow-x:auto;padding:12px 0 2px;scrollbar-width:thin}
+#list span{flex:0 0 auto;min-width:38px;text-align:center;padding:6px 9px;border:1px solid var(--bd);background:var(--sf);border-radius:10px;font-weight:700;font-size:14px;cursor:pointer}
+#list span.past{opacity:.45}#list span.on{background:var(--ac);color:var(--acx);border-color:var(--ac);opacity:1}
+#scene,#pscene{perspective:1000px;height:330px;display:grid;place-items:center;touch-action:none;cursor:grab;overflow:hidden;user-select:none}
+#cube,#pcube{position:relative;width:0;height:0;transform-style:preserve-3d}
+.st{position:absolute;left:0;top:0;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:8px;backface-visibility:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.st.bk{width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:0;background:#0b0b0d}
+.legend{font-size:12px;color:var(--mu);text-align:center;margin:4px 8px 0}
+.hb{margin-left:auto;display:flex;gap:6px}.hb button{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:7px 10px;font:700 12px system-ui;cursor:pointer}
+.st{display:grid;place-items:center;font:800 24px system-ui;color:#000;text-shadow:0 0 3px #fff}.st.bk{font-size:0}
+#pscene{height:300px}
+#vw{position:relative;aspect-ratio:1;border-radius:16px;overflow:hidden;background:#000;margin-bottom:6px}#vid{width:100%;height:100%;object-fit:cover}
+#gd{position:absolute;inset:5%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}#gd div{border:3px solid #fff;border-radius:10px;display:grid;place-items:center;font-weight:800;color:#000;opacity:.8}
+#cg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:220px;margin:0 auto 12px}#cg div{aspect-ratio:1;border-radius:10px;border:1px solid rgba(0,0,0,.3);display:grid;place-items:center;font-weight:800;color:#000;cursor:pointer}
+#net{margin-top:10px}
+/* ===== GAN-style dark sport skin ===== */
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0b0b0e;--card:#16161b;--tx:#f4f4f6;--mu:#8b8b96;--bd:#24242c;--ac:#ff6b1a;--ac2:#ff3d54;--acx:#fff;--sf:#1e1e25;--sh:none}
+body{background:radial-gradient(120% 55% at 50% -8%,#2e1608 0,#0b0b0e 62%) no-repeat,#0b0b0e}
+h1{font-size:18px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
+.logo{background:#000;border:1px solid #2a2a33;box-shadow:0 0 18px rgba(255,107,26,.4)}
+.card{border:0;border-radius:24px}
+.seg{border:0;border-radius:99px}.seg button{border-radius:99px;font-weight:700;font-size:13px}
+.seg button.on{box-shadow:0 4px 16px rgba(255,90,30,.4)}
+.btn{border:0;border-radius:99px;background:#23232b}.btn.pri{box-shadow:0 6px 22px rgba(255,90,30,.38)}
+.hb button{border:0;border-radius:99px;background:#1e1e25}
+.bar{background:rgba(22,22,27,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid #2a2a33;border-radius:99px}
+.faces .fc{border-color:transparent;border-radius:16px}.fc.cur{border-color:var(--ac);box-shadow:0 0 16px rgba(255,107,26,.45)}.fc.done{border-color:var(--ok)}
+.hint{border-left:3px solid var(--ac);border-radius:12px}
+.pal button{border-color:#16161b}
+#scene,#pscene{height:340px;background:radial-gradient(closest-side,rgba(255,107,26,.26),transparent 78%)}
+.st{border-radius:10px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.6),inset 0 9px 14px rgba(255,255,255,.3),inset 0 -9px 12px rgba(0,0,0,.25)}
+.st.bk{box-shadow:none;border-radius:0}
+#big{filter:drop-shadow(0 0 18px rgba(255,107,26,.5))}#arrow{text-shadow:0 0 14px rgba(255,107,26,.6)}
+#tm{font-size:64px!important;color:#fff;letter-spacing:2px;font-variant-numeric:tabular-nums;text-shadow:0 0 26px rgba(255,107,26,.5)}
+.prog{height:6px}#list span{border-radius:99px}
+#vw{border:2px solid var(--ac)}.st.ar{background:transparent!important;box-shadow:none!important;font-size:48px;color:#fff;text-shadow:0 0 10px #ff6b1a,0 0 3px #000;pointer-events:none}#gd div{border-color:rgba(255,255,255,.9)}
+#list{position:relative}
+#out #scene{height:250px}#out .st{}
+#big{font-size:60px}#arrow{font-size:36px}
+#stg{min-height:96px}#desc{min-height:54px;margin-bottom:10px}
+#out .card{padding:12px}#out .btn{padding:11px 12px}
+#inp[data-tab="P"] .tA{display:none!important}#inp[data-tab="A"] .tP{display:none}
+main{padding-bottom:100px}.bar{bottom:78px}
+#nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:4px;background:rgba(18,18,22,.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid #2a2a33;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:50}
+#nav button{flex:1;border:0;background:none;color:var(--mu);font:700 12px system-ui;padding:6px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+#nav button.on{color:var(--ac)}#nav button:disabled{opacity:.35}
+</style></head>
+<body><main>
+<header><div class="logo">🧩</div><div><h1>Cube Solver</h1><p data-t="sub">Scan or paint your cube, then follow the moves</p></div><div class="hb"><button id="lang">FIL</button><button id="fs" aria-label="Text size">A+</button><button id="cb" aria-label="Colourblind letters">👁 Aa</button></div></header>
 
+<div id="inp" data-tab="A">
+<div class="hint tA" id="tut" hidden><b data-t="tutT"></b><span data-t="tutD"></span><button class="btn pri" id="tutok" data-t="tutok" style="margin-top:10px;width:100%"></button></div>
+<div class="seg tA" id="seg"><button data-m="scan" data-t="seg1" class="on"></button><button data-m="paint" data-t="seg2"></button></div>
+<section class="card tA"><p class="lbl" data-t="s1"></p><div class="faces" id="faces"></div><div class="hint" id="hint"></div>
+<div id="scanCard"><div id="cam" hidden><div id="vw"><video id="vid" playsinline muted></video><div id="gd"></div></div><p class="tip" id="ctip" style="text-align:center"></p></div>
+<div id="cfm" hidden><p class="tip" data-t="cfmT" style="margin:0 0 10px"></p><div id="cg"></div><div class="two"><button class="btn" id="rt" data-t="rt"></button><button class="btn pri" id="ok" data-t="ok"></button></div></div>
+<div class="two" id="cbtn" style="flex-wrap:wrap"><button class="btn pri" id="camb"></button><label class="btn">🖼 <span data-t="up"></span><input type="file" accept="image/*" id="fin"></label><label class="btn">📸 <span data-t="snap"></span><input type="file" accept="image/*" capture="environment" id="fin2"></label></div>
+<p class="tip" id="cerr" style="color:var(--er);text-align:center"></p></div></section>
+<section class="card tA"><p class="lbl" data-t="cube"></p><div id="pscene"><div id="pcube"></div></div><div class="pal" id="pal"></div>
+<p class="tip" style="text-align:center;margin:0" data-t="tipP"></p><div class="chips" id="chips"></div><div id="msg"></div>
+<details style="margin-top:10px"><summary class="tip" data-t="flat"></summary><div id="net"></div></details></section>
+<section class="card tP"><p class="lbl" data-t="pr"></p><div id="scr" style="text-align:center;word-break:break-word;min-height:24px"></div>
+<div id="tm" style="font:800 40px ui-monospace,monospace;text-align:center;margin:8px 0">0.00</div><div class="two"><button class="btn" id="scb" data-t="scb"></button><button class="btn pri" id="tgo"></button></div><select id="stsel" class="btn" style="width:100%;margin-top:10px;background:#23232b;color:#fff"></select><button class="btn" id="stb" data-t="stb" style="width:100%;margin-top:8px"></button><p class="tip" id="best" style="text-align:center"></p><p class="tip" id="hist" style="text-align:center;font-family:ui-monospace,monospace"></p><button class="btn" id="clr" data-t="clr" style="width:100%"></button></section>
+<div class="seg tA" id="mseg"><button data-m="quick" data-t="mth1"></button><button data-m="beg" data-t="mth2"></button></div>
+<div class="bar tA"><button class="btn" id="reset" data-t="reset">Reset</button><button class="btn pri" id="go" disabled>Preparing solver…</button></div>
+</div>
+
+<div id="out" hidden>
+<section class="card" style="padding:6px"><div id="scene"><div id="cube"></div></div><p class="tip" data-t="drag" style="text-align:center;margin:0 0 4px">Drag to rotate the cube</p></section>
+<section class="card">
+<div class="step"><span id="stp"></span><span id="tot"></span></div>
+<div class="prog"><div id="pb"></div></div>
+<div class="hint" id="stg" hidden></div>
+<div class="mv"><div id="arrow"></div><div id="big"></div></div>
+<div id="desc"></div>
+<div class="two"><button class="btn" id="prev" data-t="prevb">← Back</button><button class="btn pri" id="next" data-t="nextb">Next →</button></div>
+<div class="two" style="margin-top:10px"><button class="btn" id="play">▶ Auto-play</button><button class="btn" id="speed">⚡ Normal</button><button class="btn" id="edit" data-t="edit">✏️ Edit</button></div>
+<div class="two" style="margin-top:10px"><button class="btn" id="vc"></button><button class="btn" id="resc" data-t="resc"></button></div><div class="two" style="margin-top:10px"><button class="btn" id="wr" data-t="wr"></button></div><p class="tip" id="wrt" data-t="wrT" hidden style="text-align:center"></p><div class="chips" id="wp" hidden></div><div id="list"></div>
+</section>
+<p class="legend" data-t="legend">U top · D bottom · L left · R right · F front · B back. Plain letter = clockwise quarter turn, ’ = counter-clockwise, 2 = half turn. Clockwise is as you look straight at that face.</p>
+</div>
+</main>
+<nav id="nav"><button data-n="A" class="on"><i style="font-style:normal;font-size:20px">🧊</i><span data-t="nA"></span></button><button data-n="P"><i style="font-style:normal;font-size:20px">⏱</i><span data-t="nP"></span></button><button data-n="S" disabled><i style="font-style:normal;font-size:20px">🧩</i><span data-t="nS"></span></button></nav>
+
+<script>
+/* ===== Cube model + two-phase solver (no external libraries) ===== */
+const FACES_='URFDLB';
+const CP=[[3,0,1,2,4,5,6,7],[4,1,2,0,7,5,6,3],[1,5,2,3,0,4,6,7],[0,1,2,3,5,6,7,4],[0,2,6,3,4,1,5,7],[0,1,3,7,4,5,2,6]];
+const CO=[[0,0,0,0,0,0,0,0],[2,0,0,1,1,0,0,2],[1,2,0,0,2,1,0,0],[0,0,0,0,0,0,0,0],[0,1,2,0,0,2,1,0],[0,0,1,2,0,0,2,1]];
+const EP=[[3,0,1,2,4,5,6,7,8,9,10,11],[8,1,2,3,11,5,6,7,4,9,10,0],[0,9,2,3,4,8,6,7,1,5,10,11],[0,1,2,3,5,6,7,4,8,9,10,11],[0,1,10,3,4,5,9,7,8,2,6,11],[0,1,2,11,4,5,6,10,8,9,3,7]];
+const Z12=Array(12).fill(0),EO=[Z12,Z12,[0,1,0,0,0,1,0,0,1,1,0,0],Z12,Z12,[0,0,0,1,0,0,0,1,0,0,1,1]];
+const mul=(s,m)=>({cp:m.cp.map(j=>s.cp[j]),co:m.cp.map((j,i)=>(s.co[j]+m.co[i])%3),ep:m.ep.map(j=>s.ep[j]),eo:m.ep.map((j,i)=>(s.eo[j]+m.eo[i])%2)});
+const IDC={cp:[0,1,2,3,4,5,6,7],co:Array(8).fill(0),ep:[...Array(12).keys()],eo:Array(12).fill(0)};
+const MV=[];for(let f=0;f<6;f++){const b={cp:CP[f],co:CO[f],ep:EP[f],eo:EO[f]},b2=mul(b,b);MV.push(b,b2,mul(b2,b))}
+const CF=[[8,9,20],[6,18,38],[0,36,47],[2,45,11],[29,26,15],[27,44,24],[33,53,42],[35,17,51]];
+const EF=[[5,10],[7,19],[3,37],[1,46],[32,16],[28,25],[30,43],[34,52],[23,12],[21,41],[50,39],[48,14]];
+const CCn=['URF','UFL','ULB','UBR','DFR','DLF','DBL','DRB'],ECn=['UR','UF','UL','UB','DR','DF','DL','DB','FR','FL','BL','BR'];
+const inv=a=>{let n=0;for(let i=0;i<a.length;i++)for(let j=i+1;j<a.length;j++)if(a[i]>a[j])n++;return n};
+function toCubie(s){
+  const c={cp:[],co:[],ep:[],eo:[]};
+  for(let i=0;i<8;i++){let o=0;while(o<3&&s[CF[i][o]]!=='U'&&s[CF[i][o]]!=='D')o++;
+    const a=s[CF[i][(o+1)%3]],b=s[CF[i][(o+2)%3]];c.cp[i]=CCn.findIndex(x=>x[1]===a&&x[2]===b);c.co[i]=o}
+  for(let i=0;i<12;i++){const a=s[EF[i][0]],b=s[EF[i][1]];
+    let j=ECn.findIndex(x=>x[0]===a&&x[1]===b);if(j>=0){c.ep[i]=j;c.eo[i]=0}
+    else{j=ECn.findIndex(x=>x[0]===b&&x[1]===a);c.ep[i]=j;c.eo[i]=1}}
+  const ok=c.cp.every(v=>v>=0)&&c.ep.every(v=>v>=0)&&new Set(c.cp).size===8&&new Set(c.ep).size===12
+    &&c.co.reduce((a,b)=>a+b)%3===0&&c.eo.reduce((a,b)=>a+b)%2===0&&(inv(c.cp)+inv(c.ep))%2===0;
+  return ok?c:null}
+const perm=a=>{let r=0,n=a.length;for(let i=0;i<n-1;i++){let c=0;for(let j=i+1;j<n;j++)if(a[j]<a[i])c++;r=r*(n-i)+c}return r};
+let TB=null;
+const ALL=[...Array(18).keys()],P2=[0,1,2,9,10,11,4,7,13,16];
+function initSolver(){
+  if(TB)return;
+  const midx=new Int16Array(4096).fill(-1);let nm=0;
+  for(let m=0;m<4096;m++){let b=0;for(let i=0;i<12;i++)b+=m>>i&1;if(b===4)midx[m]=nm++}
+  const eTw=c=>c.co.slice(0,7).reduce((a,x)=>a*3+x,0),eFl=c=>c.eo.slice(0,11).reduce((a,x)=>a*2+x,0),
+    eSl=c=>midx[c.ep.reduce((a,p,i)=>p>=8?a|1<<i:a,0)],eCp=c=>perm(c.cp),eUe=c=>perm(c.ep.slice(0,8)),eSp=c=>perm(c.ep.slice(8).map(v=>v-8));
+  const mk=(n,enc,list)=>{const t=new Uint16Array(n*18),seen=new Uint8Array(n),reps=[],q=[enc(IDC)];
+    seen[q[0]]=1;reps[q[0]]=IDC;
+    for(let h=0;h<q.length;h++){const c=q[h],r=reps[c];for(const m of list){const nr=mul(r,MV[m]),nc=enc(nr);t[c*18+m]=nc;if(!seen[nc]){seen[nc]=1;reps[nc]=nr;q.push(nc)}}}
+    return t};
+  const pr=(tA,nA,tB,nB,list,sa,sb)=>{const p=new Uint8Array(nA*nB).fill(255);p[sa*nB+sb]=0;
+    for(let d=0,go=true;go;d++){go=false;for(let i=0;i<p.length;i++)if(p[i]===d){const a=(i/nB)|0,b=i-a*nB;
+      for(const m of list){const k=tA[a*18+m]*nB+tB[b*18+m];if(p[k]===255){p[k]=d+1;go=true}}}}
+    return p};
+  const s0=midx[0xF00];
+  const tTw=mk(2187,eTw,ALL),tFl=mk(2048,eFl,ALL),tSl=mk(495,eSl,ALL),tCp=mk(40320,eCp,P2),tUe=mk(40320,eUe,P2),tSp=mk(24,eSp,P2);
+  TB={tTw,tFl,tSl,tCp,tUe,tSp,s0,eCp,eUe,eSp,
+    pTS:pr(tTw,2187,tSl,495,ALL,0,s0),pFS:pr(tFl,2048,tSl,495,ALL,0,s0),pCS:pr(tCp,40320,tSp,24,P2,0,0),pUS:pr(tUe,40320,tSp,24,P2,0,0)};
+}
+const MN=[];for(const f of FACES_)MN.push(f,f+'2',f+"'");
+function solveFacelets(s){
+  const c0=toCubie(s);if(!c0)return null;
+  initSolver();const {tTw,tFl,tSl,tCp,tUe,tSp,s0,pTS,pFS,pCS,pUS}=TB;
+  const skip=(m,l)=>{if(l<0)return false;const f=(m/3)|0,g=(l/3)|0;return f===g||(f%3===g%3&&f<g)};
+  let cap=15;
+  const s2=(cp,ue,sp,d,l,out)=>{if(Math.max(pCS[cp*24+sp],pUS[ue*24+sp])>d)return false;if(d===0)return true;
+    for(const m of P2){if(skip(m,l))continue;out.push(m);if(s2(tCp[cp*18+m],tUe[ue*18+m],tSp[sp*18+m],d-1,m,out))return true;out.pop()}return false};
+  let res=null;
+  const s1=(tw,fl,sl,d,l,path)=>{if(Math.max(pTS[tw*495+sl],pFS[fl*495+sl])>d)return false;
+    if(d===0){let c=c0;for(const m of path)c=mul(c,MV[m]);const cp=TB.eCp(c),ue=TB.eUe(c),sp=TB.eSp(c);
+      for(let d2=0;d2<=cap;d2++){const o=[];if(s2(cp,ue,sp,d2,-1,o)){res=path.concat(o);return true}}return false}
+    for(let m=0;m<18;m++){if(skip(m,l))continue;path.push(m);if(s1(tTw[tw*18+m],tFl[fl*18+m],tSl[sl*18+m],d-1,m,path))return true;path.pop()}return false};
+  const tw=c0.co.slice(0,7).reduce((a,x)=>a*3+x,0),fl=c0.eo.slice(0,11).reduce((a,x)=>a*2+x,0),
+    sm=c0.ep.reduce((a,p,i)=>p>=8?a|1<<i:a,0);
+  // slice index lookup (same enumeration order as in initSolver)
+  let si=0;for(let m=0;m<sm;m++){let b=0;for(let i=0;i<12;i++)b+=m>>i&1;if(b===4)si++}
+  for(;cap<=18&&!res;cap+=3)for(let d=0;d<=12&&!res;d++)s1(tw,fl,si,d,-1,[]);
+  return res?res.map(m=>MN[m]):null;
+}
+/* ===== Sticker geometry (shared by the 3D view) ===== */
+const AXM={U:[1,1,-1],D:[1,-1,1],R:[0,1,-1],L:[0,-1,1],F:[2,1,-1],B:[2,-1,1]};
+function rotv(v,a,q){q=((q%4)+4)%4;for(let k=0;k<q;k++){const[x,y,z]=v;v=a===0?[x,-z,y]:a===1?[z,y,-x]:[-y,x,z]}return v}
+function mvInfo(m){const[a,l,s]=AXM[m[0]];return{a,l,q:m[1]==='2'?2:m[1]==="'"?-s:s}}
+function slotOf(i){const f=FACES_[Math.floor(i/9)],r=Math.floor(i%9/3),c=i%3;
+  return f==='U'?[[c-1,1,r-1],[0,1,0]]:f==='R'?[[1,1-r,1-c],[1,0,0]]:f==='F'?[[c-1,1-r,1],[0,0,1]]:
+  f==='D'?[[c-1,-1,1-r],[0,-1,0]]:f==='L'?[[-1,1-r,c-1],[-1,0,0]]:[[1-c,1-r,-1],[0,0,-1]]}
+/* ===== Input diagnosis ===== */
+function diagnose(s){
+  const cp=[],co=[],ep=[],eo=[],bad=new Set();
+  for(let i=0;i<8;i++){let o=0;while(o<3&&s[CF[i][o]]!=='U'&&s[CF[i][o]]!=='D')o++;
+    const a=s[CF[i][(o+1)%3]],b=s[CF[i][(o+2)%3]];cp[i]=CCn.findIndex(x=>x[1]===a&&x[2]===b);co[i]=o;
+    if(o>2||cp[i]<0)CF[i].forEach(k=>bad.add(k))}
+  for(let i=0;i<12;i++){const a=s[EF[i][0]],b=s[EF[i][1]];let j=ECn.findIndex(x=>x[0]===a&&x[1]===b),f=0;
+    if(j<0){j=ECn.findIndex(x=>x[0]===b&&x[1]===a);f=1}ep[i]=j;eo[i]=f;if(j<0)EF[i].forEach(k=>bad.add(k))}
+  if(bad.size)return{bad:[...bad],msg:'Some stickers form a piece that can’t exist on a real cube (for example orange and red on one corner). The outlined stickers belong to impossible pieces. Check them, and check that each face is entered the right way up.'};
+  const dup=[];cp.forEach((v,i)=>{if(cp.indexOf(v)!==i||cp.lastIndexOf(v)!==i)CF[i].forEach(k=>dup.push(k))});
+  ep.forEach((v,i)=>{if(ep.indexOf(v)!==i||ep.lastIndexOf(v)!==i)EF[i].forEach(k=>dup.push(k))});
+  if(dup.length)return{bad:dup,msg:'The same corner or edge piece appears twice. The outlined stickers show the duplicates, so one of them is the wrong colour or the face is turned the wrong way.'};
+  if(co.reduce((a,b)=>a+b)%3)return{bad:[],msg:'One corner looks twisted in place. Compare every corner with your real cube.'};
+  if(eo.reduce((a,b)=>a+b)%2)return{bad:[],msg:'One edge looks flipped. Compare every edge with your real cube.'};
+  if((inv(cp)+inv(ep))%2)return{bad:[],msg:'Two pieces look swapped. Re-check your colours.'};
+  return null}
+const rot90=f=>[6,3,0,7,4,1,8,5,2].map(i=>f[i]).join('');
+function findRotFix(s){
+  const fc=[...Array(6)].map((_,i)=>s.slice(i*9,i*9+9));let best=null;
+  const rec=(i,cur,rs)=>{if(i===6){if(toCubie(cur.join(''))){const w=rs.reduce((a,r)=>a+Math.min(r,4-r),0);if(!best||w<best.w)best={w,rs:rs.slice(),s:cur.join('')}}return}
+    let f=fc[i];for(let r=0;r<4;r++){rec(i+1,cur.concat(f),rs.concat(r));f=rot90(f)}};
+  rec(0,[],[]);return best&&best.w>0?best:null}
+
+const F='URFDLB',ORDER='UFRBLD',COL={U:'#f5f5f5',R:'#d62828',F:'#2a9d3f',D:'#f2c718',L:'#f77f00',B:'#1d5fd1'};
+const NAME={U:'top',D:'bottom',L:'left',R:'right',F:'front',B:'back'},CN={U:'white',R:'red',F:'green',D:'yellow',L:'orange',B:'blue'};
+const POS={U:[0,3],L:[3,0],F:[3,3],R:[3,6],B:[3,9],D:[6,3]};
+const $=id=>document.getElementById(id);
+const solved=()=>F.split('').map(f=>f.repeat(9)).join('');
+const cap=s=>s[0].toUpperCase()+s.slice(1);
+let BAD=new Set(),FIX=null,st=solved(),brush='U',cur='U',mode='scan',samples={},thumbs={},states=[],moves=[],idx=0,ready=false,timer=null;
+
+function draw(el,s,edit,hl){
+  el.innerHTML='';
+  for(let i=0;i<54;i++){
+    const f=F[Math.floor(i/9)],k=i%9,d=document.createElement('div');
+    d.style.gridRow=POS[f][0]+Math.floor(k/3)+1;d.style.gridColumn=POS[f][1]+k%3+1;
+    d.style.background=COL[s[i]];
+    if(hl&&f!==hl)d.style.opacity='.35';
+    if(edit&&BAD.has(i)){d.style.outline='3px solid #ef4444';d.style.outlineOffset='1px'}
+    if(edit&&k!==4){d.className='edit';d.onclick=()=>{st=st.slice(0,i)+brush+st.slice(i+1);refresh()}}
+    el.appendChild(d);
+  }
+}
+function counts(){
+  let bad=[];
+  $('chips').innerHTML=F.split('').map(c=>{const n=st.split(c).length-1;if(n!==9)bad.push(CN[c]);
+    return`<span class="chip ${n===9?'good':'bad'}"><i style="background:${COL[c]}"></i>${n}/9</span>`}).join('');
+  return bad;
+}
+function refresh(msg){
+  const n=Object.keys(samples).length,bad=counts();
+  const dg=bad.length?null:diagnose(st);BAD=new Set(dg?dg.bad:[]);FIX=dg?findRotFix(st):null;
+  draw($('net'),st,true,null);P.paint(st,BAD);try{localStorage.setItem('cs_st',st)}catch(e){}
+  const m=$('msg');m.className='';m.textContent='';
+  if(bad.length){m.className='err';m.textContent='Every colour needs exactly 9 stickers. Check: '+bad.join(', ')+'.'}
+  else if(dg){m.className='err';m.textContent=FIX?'These colours can’t be a real cube, but it looks like some faces are entered turned sideways.':dg.msg;
+    if(FIX){const d=FIX.rs.map((r,i)=>r?`${cap(NAME[F[i]])} ${r===1?'↻ 90°':r===2?'180°':'↺ 90°'}`:'').filter(Boolean).join(', ');
+      const b=document.createElement('button');b.className='btn pri';b.style.cssText='margin-top:10px;width:100%';b.textContent='✨ Auto-fix: rotate '+d;
+      b.onclick=()=>{st=FIX.s;refresh('Fixed! Please compare the map with your real cube.')};m.appendChild(document.createElement('br'));m.appendChild(b)}}
+  else m.textContent=msg||'✓ Looks like a valid cube. Compare the map with your real cube, then solve.';
+}
+$('faces').onclick=e=>{const b=e.target.closest('.fc');if(!b)return;cur=b.dataset.f;P.face(cur);renderFaces();refresh()};
+
+$('pal').onclick=e=>{const c=e.target.dataset.c;if(!c)return;brush=c;[...$('pal').children].forEach(b=>b.classList.toggle('on',b.dataset.c===c))};
+$('seg').onclick=e=>{const m=e.target.dataset.m;if(!m)return;mode=m;[...$('seg').children].forEach(b=>b.classList.toggle('on',b.dataset.m===m));$('scanCard').hidden=m!=='scan';if(m!=='scan')stopCam();renderFaces();refresh()};
+
+$('reset').onclick=()=>{stopCam();for(const c in refs)delete refs[c];st=solved();samples={};thumbs={};cur='U';renderFaces();refresh()};
+
+setTimeout(()=>{try{initSolver();ready=true;$('go').disabled=false;$('go').textContent=t('solve')}
+catch(e){$('go').textContent='Solver error';const m=$('msg');m.className='err';m.textContent='The solver could not start in this browser.'}},80);
+const S=60,sleep=ms=>new Promise(r=>setTimeout(r,ms));let speed=650,playing=false;
+const ORI={'0,0,1':'','0,0,-1':'rotateY(180deg)','1,0,0':'rotateY(90deg)','-1,0,0':'rotateY(-90deg)','0,1,0':'rotateX(90deg)','0,-1,0':'rotateX(-90deg)'};
+const V={el:$('cube'),stk:[],busy:false,rx:-25,ry:-40,
+  view(){this.el.style.transform=`rotateX(${this.rx}deg) rotateY(${this.ry}deg)`},
+  build(s){const cube=this.el;cube.innerHTML='';this.stk=[];this.view();
+    const add=(p,n,c,off,i)=>{const el=document.createElement('div');el.className=c?'st':'st bk';if(c){el.style.background=COL[c];el.dataset.i=i;if(cbOn)el.textContent=CL[c]}
+      const o={p,n,el,off,c,i};this.stk.push(o);cube.appendChild(el);this.place(o)};
+    for(let i=0;i<54;i++){const[p,n]=slotOf(i);add(p,n,s[i],S/2+.5,i)}
+    for(let x=-1;x<2;x++)for(let y=-1;y<2;y++)for(let z=-1;z<2;z++)for(const n of[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]])add([x,y,z],n,null,S/2-.5)},
+  place(o,pre){const[x,y,z]=o.p;o.el.style.transform=`${pre||'rotate3d(0,1,0,0deg) '}translate3d(${x*S}px,${-y*S}px,${z*S}px) ${ORI[o.n.join()]} translateZ(${o.off}px)`},
+  inst(m){const{a,l,q}=mvInfo(m);for(const o of this.stk)if(o.p[a]===l){o.p=rotv(o.p,a,q);o.n=rotv(o.n,a,q);this.place(o)}},
+  anim(m,ms){const{a,l,q}=mvInfo(m),L=this.stk.filter(o=>o.p[a]===l),ax=[0,0,0];ax[a]=1;
+    const pre=d=>`rotate3d(${ax[0]},${-ax[1]},${ax[2]},${d}deg) `;
+    L.forEach(o=>{o.el.style.transition='none';this.place(o,pre(0))});void this.el.offsetWidth;
+    L.forEach(o=>{o.el.style.transition=`transform ${ms}ms ease-in-out`;this.place(o,pre(-q*90))});
+    return new Promise(res=>setTimeout(()=>{L.forEach(o=>{o.el.style.transition='none';o.p=rotv(o.p,a,q);o.n=rotv(o.n,a,q);this.place(o)});res()},ms+40))}};
+const sc=$('scene');let dr=null;
+sc.onpointerdown=e=>{dr=[e.clientX,e.clientY];sc.setPointerCapture(e.pointerId)};
+sc.onpointermove=e=>{if(!dr)return;V.ry+=(e.clientX-dr[0])*.5;V.rx=Math.max(-85,Math.min(85,V.rx-(e.clientY-dr[1])*.5));dr=[e.clientX,e.clientY];V.view()};
+sc.onpointerup=sc.onpointercancel=()=>{dr=null};
+$('go').onclick=()=>{
+  if(!ready)return;if(counts().length||diagnose(st)){refresh();return}
+  stopCam();const b=$('go');b.disabled=true;b.textContent=t('solving');
+  setTimeout(()=>{
+    let sol=null;STG=[];PATS=[];try{if(method==='beg'){const r=begSolveC(toCubie(st));if(r){sol=r.m;STG=r.s;PATS=r.p}}if(!sol)sol=solveFacelets(st)}catch(e){}
+    b.disabled=false;b.textContent=t('solve');
+    if(sol==null){const m=$('msg');m.className='err';m.textContent='That isn’t a valid cube position (twisted corner, flipped edge or swapped pieces). Re-check your colours.';return}
+    moves=sol;idx=0;stop();$('inp').hidden=true;$('out').hidden=false;V.build(st);show();scrollTo(0,0)},40)};
+$('edit').onclick=()=>{stop();$('out').hidden=true;$('inp').hidden=false};
+const pretty=m=>m.replace("'",'’'),invm=m=>m[1]==='2'?m:m[1]==="'"?m[0]:m[0]+"'";
+async function step(d){if(V.busy)return;
+  if(d>0&&idx<moves.length){V.busy=true;await V.anim(moves[idx],speed);idx++}
+  else if(d<0&&idx>0){V.busy=true;await V.anim(invm(moves[idx-1]),speed);idx--}
+  V.busy=false;show()}
+function stop(){playing=false;$('play').textContent=t('play')}
+$('play').onclick=async()=>{if(playing){stop();return}playing=true;$('play').textContent=t('pause');
+  while(playing&&idx<moves.length){await step(1);await sleep(200)}stop()};
+$('speed').onclick=()=>{speed=speed===650?1100:speed===1100?300:650;$('speed').textContent='⚡ '+(speed===1100?'Slow':speed===300?'Fast':'Normal')};
+$('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);
+$('list').onclick=e=>{const i=e.target.dataset.i;if(i==null||V.busy)return;stop();V.build(st);for(let k=0;k<+i;k++)V.inst(moves[k]);idx=+i;show()};
+document.onkeydown=e=>{if($('out').hidden)return;if(e.key==='ArrowRight')step(1);if(e.key==='ArrowLeft')step(-1)};
+/* ===== v2 additions ===== */
+const CL={U:'W',R:'R',F:'G',D:'Y',L:'O',B:'B'},NF={U:'itaas',D:'ibaba',L:'kaliwa',R:'kanan',F:'harap',B:'likod'},CF2={U:'puti',R:'pula',F:'berde',D:'dilaw',L:'kahel',B:'asul'};
+const T={en:{sub:'Scan or paint your cube, then follow the moves',seg1:'📷 Scan with camera',seg2:'🎨 Paint on 3D cube',s1:'Step 1 · Choose a face',camb:'📷 Open live camera',up:'Upload',dark:'Too dark. Move to better light.',hold:'Hold steady inside the squares…',show:'Show the {f} face ({c} centre)',hU:'Hold the cube with the green side at the bottom of the frame.',hD:'Hold the cube with the green side at the top of the frame.',hS:'Hold the cube with the white side at the top of the frame.',paintT:'Paint straight on the 3D cube',paintD:'Pick a colour below, then tap a sticker. Drag to turn the cube, or tap a face above to jump to it.',rt:'Retake',ok:'✓ Confirm',cfmT:'Check the 9 colours. Pick a colour below, then tap any wrong square. Watch orange vs red and white vs yellow.',cube:'Your cube',tipP:'Centres are locked. The 👁 button adds colour letters for colourblind users.',flat:'Flat map',pr:'⏱ Practice',scb:'🎲 Random scramble',start:'Start',stop:'Stop',best:'Best',reset:'Reset',solve:'Solve it ✨',solving:'Solving…',turn:'Turn the {f} face {q}',cw:'clockwise',ccw:'counter-clockwise',half:'half turn (180°)',step:'Step',mv:'moves',done:'Complete',solvedW:'Solved',fin:'Finished in {n} moves. Nice work!',already:'This cube is already solved.',next:'Next:',last:'Last move',prevb:'← Back',nextb:'Next →',play:'▶ Auto-play',pause:'⏸ Pause',edit:'✏️ Edit',voice:'Voice',resc:'🔄 I re-scanned my cube',rescm:'Your current position is loaded. Fix any stickers that differ from your real cube, then solve again.',drag:'Drag to rotate the cube',camfail:'Camera unavailable here. Use Upload instead.',snap:'Take photo',camnone:'No camera found on this device. Use Take photo or Upload.',campol:'The browser blocked live camera in this embedded page. Tap Take photo (opens your phone camera), or open the page in its own tab / as a downloaded file and allow camera access.',legend:'U top · D bottom · L left · R right · F front · B back. Plain letter = clockwise quarter turn, ’ = counter-clockwise, 2 = half turn. Clockwise is as you look straight at that face.'},
+fil:{sub:'I-scan o ipinta ang cube, saka sundan ang mga galaw',seg1:'📷 I-scan gamit ang camera',seg2:'🎨 Ipinta sa 3D cube',s1:'Hakbang 1 · Pumili ng face',camb:'📷 Buksan ang live camera',up:'Mag-upload',dark:'Madilim. Lumipat sa mas maliwanag.',hold:'Hawakan nang steady sa loob ng mga kuwadrado…',show:'Ipakita ang {f} na face ({c} ang gitna)',hU:'Hawakan ang cube nang nasa ibaba ng frame ang berdeng side.',hD:'Hawakan ang cube nang nasa itaas ng frame ang berdeng side.',hS:'Hawakan ang cube nang nasa itaas ng frame ang puting side.',paintT:'Direktang ipinta sa 3D cube',paintD:'Pumili ng kulay sa ibaba, saka tapikin ang sticker. I-drag para iikot ang cube, o pindutin ang face sa itaas para lumipat.',rt:'Ulitin',ok:'✓ Kumpirmahin',cfmT:'Tingnan ang 9 na kulay. Pumili ng kulay sa ibaba, saka tapikin ang maling kuwadrado. Bantayan ang orange vs red at white vs yellow.',cube:'Ang cube mo',tipP:'Naka-lock ang mga gitna. Ang 👁 button ay naglalagay ng letra sa bawat kulay para sa colorblind.',flat:'Flat na mapa',pr:'⏱ Practice',scb:'🎲 Random na scramble',start:'Simulan',stop:'Itigil',best:'Pinakamabilis',reset:'I-reset',solve:'I-solve ✨',solving:'Sinosolve…',turn:'Ikot ang {f} na bahagi, {q}',cw:'clockwise',ccw:'counter-clockwise',half:'kalahating ikot (180°)',step:'Hakbang',mv:'galaw',done:'Tapos na',solvedW:'Solved!',fin:'Tapos sa {n} galaw. Galing!',already:'Solved na ang cube na ito.',next:'Susunod:',last:'Huling galaw',prevb:'← Balik',nextb:'Susunod →',play:'▶ Auto-play',pause:'⏸ Hinto',edit:'✏️ I-edit',voice:'Boses',resc:'🔄 Na-scan ulit ang cube ko',rescm:'Na-load ang kasalukuyang posisyon. Ayusin ang mga sticker na iba sa totoong cube mo, saka i-solve ulit.',drag:'I-drag para iikot ang cube',camfail:'Hindi magamit ang camera dito. Gamitin ang Upload.',snap:'Kumuha ng litrato',camnone:'Walang nakitang camera sa device na ito. Gamitin ang Kumuha ng litrato o Upload.',campol:'Hinarang ng browser ang live camera sa embedded na page na ito. Pindutin ang Kumuha ng litrato (bubuksan ang camera ng phone mo), o buksan ang page sa sarili nitong tab / bilang na-download na file at payagan ang camera.',legend:'U itaas · D ibaba · L kaliwa · R kanan · F harap · B likod. Letra lang = clockwise na quarter turn, ’ = counter-clockwise, 2 = kalahating ikot. Clockwise ito kapag diretso kang nakatingin sa face na iyon.'}};
+let lang='fil',cbOn=false,voiceOn=false,stream=null,scanT=null,stable=0,last='',pend=null;
+try{lang=localStorage.getItem('cs_lang')||'fil';cbOn=localStorage.getItem('cs_cb')==='1';const s=localStorage.getItem('cs_st');if(s&&/^[URFDLB]{54}$/.test(s))st=s}catch(e){}
+const t=k=>(T[lang][k]||T.en[k]||k),nm=c=>lang==='fil'?NF[c]:NAME[c],cn=c=>lang==='fil'?CF2[c]:CN[c];
+V.hl=function(m){const i=m&&mvInfo(m);for(const o of this.stk)o.el.style.opacity=!m||o.p[i.a]===i.l?'':'.25'};
+V.read=function(){const m={};for(let i=0;i<54;i++){const[p,n]=slotOf(i);m[p.join()+'|'+n.join()]=i}const s=[];for(const o of this.stk)if(o.c)s[m[o.p.join()+'|'+o.n.join()]]=o.c;return s.join('')};
+const P=Object.create(V);P.el=$('pcube');P.stk=[];P.busy=false;P.rx=-25;P.ry=-40;
+P.paint=function(s,bad){for(const o of this.stk)if(o.c){const c=s[o.i];o.c=c;o.el.style.background=COL[c];o.el.textContent=cbOn?CL[c]:'';o.el.style.outline=bad.has(o.i)?'4px solid #ef4444':''}};
+P.face=function(c){const R={U:[-90,0],D:[90,0],F:[0,0],B:[0,180],R:[0,-90],L:[0,90]}[c];this.rx=R[0];this.ry=R[1];this.el.style.transition='transform .5s';this.view();setTimeout(()=>this.el.style.transition='',540)};
+P.build(st);
+const ps=$('pscene');let pd=null,pm=0;
+ps.onpointerdown=e=>{pd=[e.clientX,e.clientY];pm=0;ps.setPointerCapture(e.pointerId)};
+ps.onpointermove=e=>{if(!pd)return;const dx=e.clientX-pd[0],dy=e.clientY-pd[1];pm+=Math.abs(dx)+Math.abs(dy);P.ry+=dx*.5;P.rx=Math.max(-90,Math.min(90,P.rx-dy*.5));pd=[e.clientX,e.clientY];P.view()};
+ps.onpointerup=e=>{if(pd&&pm<6){const el=document.elementFromPoint(e.clientX,e.clientY),i=el&&el.dataset?el.dataset.i:null;
+  if(i!=null&&i!==''&&(+i)%9!==4){st=st.slice(0,+i)+brush+st.slice(+i+1);refresh()}}pd=null};
+ps.onpointercancel=()=>{pd=null};
+function renderPal(){$('pal').innerHTML=F.split('').map(c=>`<button data-c="${c}" style="background:${COL[c]};color:#000;font-weight:800" class="${c===brush?'on':''}" aria-label="${cn(c)}">${cbOn?CL[c]:''}</button>`).join('')}
+function renderFaces(){
+  $('faces').innerHTML=ORDER.split('').map(c=>`<button class="fc ${samples[c]?'done':''} ${c===cur?'cur':''}" data-f="${c}"><i style="background:${thumbs[c]?`url(${thumbs[c]})`:COL[c]}">${samples[c]?'✓':cbOn?CL[c]:''}</i>${cap(nm(c))}</button>`).join('');
+  $('hint').innerHTML=mode==='scan'?`<b>${t('show').replace('{f}',nm(cur)).replace('{c}',cn(cur))}</b><span>${t(cur==='U'?'hU':cur==='D'?'hD':'hS')}</span>`:`<b>${t('paintT')}</b><span>${t('paintD')}</span>`}
+function applyLang(){document.documentElement.lang=lang==='fil'?'fil':'en';document.querySelectorAll('[data-t]').forEach(e=>e.textContent=t(e.dataset.t));
+  $('lang').textContent=lang==='fil'?'FIL':'EN';$('vc').textContent='🔊 '+t('voice')+(voiceOn?' ✓':'');if(ready)$('go').textContent=t('solve');
+  if(pst===0)$('tgo').textContent='▶ '+t('start');$('camb').textContent=stream?'⏹ '+t('stop'):t('camb');
+  stats();
+  renderPal();renderFaces();if(!$('out').hidden)show();refresh()}
+$('lang').onclick=()=>{lang=lang==='fil'?'en':'fil';try{localStorage.setItem('cs_lang',lang)}catch(e){}applyLang()};
+$('cb').onclick=()=>{cbOn=!cbOn;try{localStorage.setItem('cs_cb',cbOn?'1':'0')}catch(e){}V.stk.forEach(o=>{if(o.c)o.el.textContent=cbOn?CL[o.c]:''});applyLang()};
+/* live camera */
+function lt([r,g,b]){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let h=0;
+  if(d){h=mx===r?((g-b)/d+6)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h*=60}
+  if((mx?d/mx:0)<.3&&mx>.4)return'U';if(h<15||h>=340)return'R';if(h<42)return'L';if(h<75)return'D';if(h<170)return'F';return'B'}
+function grab(src,w,h){const cv=document.createElement('canvas');cv.width=cv.height=90;const x=cv.getContext('2d'),s=Math.min(w,h);x.drawImage(src,(w-s)/2,(h-s)/2,s,s,0,0,90,90);
+  const px=[...Array(9)].map((_,k)=>{const d=x.getImageData(10+30*(k%3),10+30*Math.floor(k/3),10,10).data;let r=0,g=0,b=0;for(let i=0;i<d.length;i+=4){r+=d[i];g+=d[i+1];b+=d[i+2]}const n=d.length/4;return[r/n,g/n,b/n]});
+  return{px,th:cv.toDataURL('image/jpeg',.6)}}
+const prop=px=>{const l=px.map(lt);l[4]=cur;return l};
+$('gd').innerHTML='<div></div>'.repeat(9);
+function startScan(){stable=0;last='';clearInterval(scanT);$('cam').hidden=false;
+  scanT=setInterval(()=>{const v=$('vid');if(!v.videoWidth)return;const{px,th}=grab(v,v.videoWidth,v.videoHeight),l=prop(px),key=l.join(''),br=px.reduce((a,p)=>a+(p[0]+p[1]+p[2])/3,0)/9;
+    [...$('gd').children].forEach((d,k)=>{d.style.background=COL[l[k]];d.textContent=cbOn?CL[l[k]]:''});
+    $('ctip').textContent=br<55?t('dark'):t('hold');stable=key===last?stable+1:0;last=key;
+    if(stable>=5&&br>=55){clearInterval(scanT);showCfm(l,th)}},250)}
+function stopCam(){clearInterval(scanT);if(stream)stream.getTracks().forEach(x=>x.stop());stream=null;$('cam').hidden=true;$('camb').textContent=t('camb')}
+async function startCam(){if(stream){stopCam();return}
+  const er=$('cerr');er.textContent='';
+  try{if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw{name:'NoAPI'};
+    $('cam').hidden=false;stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    $('vid').srcObject=stream;try{await $('vid').play()}catch(x){}$('camb').textContent='⏹ '+t('stop');startScan()}
+  catch(e){stream=null;$('cam').hidden=true;er.textContent=t(e.name==='NotFoundError'?'camnone':'campol')}}
+$('camb').onclick=startCam;
+function showCfm(l,th,c){clearInterval(scanT);pend={l,th,c};$('cam').hidden=true;$('cbtn').hidden=true;$('cfm').hidden=false;drawCg()}
+function drawCg(){$('cg').innerHTML=pend.l.map((c,k)=>`<div data-k="${k}" style="background:${COL[c]}">${cbOn?CL[c]:''}</div>`).join('')}
+$('cg').onclick=e=>{const k=e.target.dataset.k;if(k==null||+k===4)return;pend.l[+k]=brush;drawCg()};
+function endCfm(){pend=null;$('cfm').hidden=true;$('cbtn').hidden=false}
+$('ok').onclick=()=>{const i=F.indexOf(cur);st=st.slice(0,i*9)+pend.l.join('')+st.slice(i*9+9);samples[cur]=1;thumbs[cur]=pend.th;if(pend.c)refs[cur]=feat(pend.c);endCfm();
+  const nx=ORDER.split('').find(c=>!samples[c]);if(nx){cur=nx;P.face(cur);if(stream)startScan()}else stopCam();renderFaces();refresh()};
+$('rt').onclick=()=>{endCfm();if(stream)startScan()};
+$('fin').onchange=e=>{const f=e.target.files[0];if(!f)return;const img=new Image();img.onload=()=>{const{px,th}=grab(img,img.width,img.height);URL.revokeObjectURL(img.src);showCfm(prop2(px),th,px[4])};img.src=URL.createObjectURL(f);e.target.value=''};
+$('fin2').onchange=$('fin').onchange;
+/* practice */
+$('scb').onclick=()=>{const a=[];let l=-1;while(a.length<20){const f=Math.floor(Math.random()*6);if(f%3===l%3&&l>=0)continue;l=f;a.push(FACES_[f]+['','2',"'"][Math.floor(Math.random()*3)])}
+  P.build(solved());for(const m of a)P.inst(m);st=P.read();P.build(st);samples={};thumbs={};cur='U';$('scr').textContent=a.map(pretty).join('  ');renderFaces();refresh()};
+/* solve view extras */
+const mtxt=m=>t('turn').replace('{f}',nm(m[0])).replace('{q}',m[1]==='2'?t('half'):m[1]==="'"?t('ccw'):t('cw'));
+function say(x){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(x);u.lang=lang==='fil'?'fil-PH':'en-US';speechSynthesis.speak(u)}catch(e){}}
+$('vc').onclick=()=>{voiceOn=!voiceOn;applyLang();if(voiceOn&&idx<moves.length)say(mtxt(moves[idx]))};
+$('resc').onclick=()=>{stop();st=V.read();samples={};thumbs={};cur='U';$('out').hidden=true;$('inp').hidden=false;P.build(st);renderFaces();refresh(t('rescm'));scrollTo(0,0)};
+function show(){const n=moves.length,done=idx===n;
+  $('pb').style.width=(n?idx/n*100:100)+'%';
+  $('stp').textContent=done?t('done'):t('step')+' '+(idx+1);$('tot').textContent=n+' '+t('mv');
+  $('prev').disabled=idx===0;$('next').disabled=done;$('play').disabled=done;
+  if(done){$('big').textContent=t('solvedW');$('arrow').textContent='🎉';$('desc').innerHTML=n?t('fin').replace('{n}',n):t('already');V.hl(null);V.arrow(null)}
+  else{const m=moves[idx];$('big').textContent=pretty(m);$('arrow').textContent=m[1]==='2'?'↻↻':m[1]==="'"?'↺':'↻';
+    $('desc').innerHTML=`${mtxt(m)}<small>${idx<n-1?t('next')+' '+pretty(moves[idx+1]):t('last')}</small>`;V.hl(m);V.arrow(m);if(voiceOn)say(mtxt(m))}
+  $('list').innerHTML=moves.map((m,i)=>`<span class="${i===idx?'on':i<idx?'past':''}" data-i="${i}">${pretty(m)}</span>`).join('');
+  const a=$('list').querySelector('.on');if(a){const L=$('list');L.scrollLeft=a.offsetLeft-L.clientWidth/2+a.offsetWidth/2}stageUI()}
+/* ===== beginner (layer-by-layer) method ===== */
+let method='quick',STG=[],PATS=[];
+try{method=localStorage.getItem('cs_m')||'quick'}catch(e){}
+const FR={F:'R',R:'B',B:'L',L:'F',U:'U',D:'D'},XL={U:'D',D:'U',F:'B',B:'F',L:'L',R:'R'};
+const mk=(a,r,g,nm)=>{const mv=a.split(' ').map(x=>{let f=x[0];for(let k=0;k<r;k++)f=FR[f];return MN.indexOf(XL[f]+(x[1]||''))});return{g,nm,n:mv.map(i=>MN[i]),cu:mv.reduce((q,i)=>mul(q,MV[i]),IDC)}};
+const AUF=["U","U'","U2"].map(a=>mk(a,0,'a','auf')),rots=(a,nm)=>[0,1,2,3].map(r=>mk(a,r,'m',nm));
+let BM=null,CT=null;
+const bm=()=>BM||(BM={co:rots("R U R' U'","co"),r:rots("U R U' R' U' F' U F","pr").concat(rots("U' L' U L U F U' F'","pl")),y:rots("F R U R' U' F'","y"),s:rots("R U R' U R U2 R'","s"),p:rots("R' F R' B2 R F' R' B2 R2","p"),e:rots("R U' R U R U R U' R' U' R2","e")});
+function srch(c,ms,goal,maxD){for(let d=0;d<=maxD;d++){const p=[];const r=(cc,k,l)=>{if(!k)return goal(cc);for(let i=0;i<ms.length;i++){if(l>=0&&ms[i].g==='a'&&ms[l].g==='a')continue;p.push(i);if(r(mul(cc,ms[i].cu),k-1,i))return true;p.pop()}return false};if(r(c,d,-1)){const o=[],g=[];for(const i of p){g.push({a:o.length,b:o.length+ms[i].n.length,nm:ms[i].nm});o.push(...ms[i].n)}o.seg=g;return o}}return null}
+function crossSeq(c){
+  if(!CT){const tE=MV.map(m=>{const t=[];for(let p=0;p<12;p++)for(let o=0;o<2;o++){const i=m.ep.indexOf(p);t[p*2+o]=i*2+(o+m.eo[i])%2}return t}),N=331776,d=new Uint8Array(N).fill(255),q=new Int32Array(N),s0=24*(2+24*(4+24*6));
+    let h=0,tl=0;d[s0]=0;q[tl++]=s0;
+    while(h<tl){const s=q[h++],a=s%24,b=((s/24)|0)%24,c2=((s/576)|0)%24,e=(s/13824)|0;for(let m=0;m<18;m++){const t=tE[m],n=t[a]+24*(t[b]+24*(t[c2]+24*t[e]));if(d[n]===255){d[n]=d[s]+1;q[tl++]=n}}}
+    CT={tE,d}}
+  const{tE,d}=CT,enc=v=>v[0]+24*(v[1]+24*(v[2]+24*v[3]));let v=[0,1,2,3].map(k=>{const p=c.ep.indexOf(k);return p*2+c.eo[p]}),s=enc(v);const o=[];
+  while(d[s]>0&&d[s]<255){for(let m=0;m<18;m++){const w=v.map(x=>tE[m][x]),n=enc(w);if(d[n]===d[s]-1){v=w;s=n;o.push(MN[m]);break}}}
+  return o}
+function begSolveC(c){if(!c)return null;const out=[],S=[],PS=[],B=bm();
+  const run=(k,seq)=>{const a=out.length;if(seq.seg)for(const g of seq.seg)PS.push({a:a+g.a,b:a+g.b,nm:g.nm});for(const n of seq){out.push(n);c=mul(c,MV[MN.indexOf(n)])}
+    if(out.length>a){const l=S[S.length-1];if(l&&l.k===k)l.b=out.length;else S.push({k,a,b:out.length})}};
+  const ok=(k,seq)=>seq?(run(k,seq),1):0;
+  run(0,crossSeq(c));
+  for(let j=0;j<4;j++){const g=x=>{for(let i=0;i<4;i++)if(x.ep[i]!==i||x.eo[i])return false;for(let i=0;i<=j;i++)if(x.cp[i]!==i||x.co[i])return false;return true};
+    if(!ok(1,srch(c,AUF.concat(B.co),g,9)))return null}
+  for(let j=8;j<12;j++){const g=x=>{for(let i=0;i<4;i++)if(x.ep[i]!==i||x.eo[i]||x.cp[i]!==i||x.co[i])return false;for(let i=8;i<=j;i++)if(x.ep[i]!==i||x.eo[i])return false;return true};
+    if(!ok(2,srch(c,AUF.concat(B.r),g,8)))return null}
+  const L=[[3,B.y,x=>x.eo.slice(4,8).every(v=>!v)],[4,B.s,x=>x.co.slice(4,8).every(v=>!v)],[5,B.p,x=>x.cp.slice(4,8).every((v,i)=>v===i+4)],
+    [6,B.e,x=>x.cp.every((v,i)=>v===i)&&x.ep.every((v,i)=>v===i)&&x.eo.every(v=>!v)&&x.co.every(v=>!v)]];
+  for(const[k,m,g]of L)if(!ok(k,srch(c,AUF.concat(m),g,7)))return null;
+  return{m:out,s:S,p:PS}}
+
+Object.assign(T.en,{mth1:'⚡ Fast (shortest)',mth2:'🎓 Learn (step by step)',stgN:'Stage {n} of 7',s0n:'White cross',s0d:'Build a plus sign on the white face. Each edge must match the centre colour of the side next to it.',s1n:'First layer',s1d:'Insert the four white corners so the whole white layer is complete.',s2n:'Second layer',s2d:'Slide the four middle-layer edges into place with the left or right insert pattern.',s3n:'Yellow cross',s3d:'Flip the edges on the yellow face until they form a cross.',s4n:'Yellow face',s4d:'Twist the yellow corners until the whole yellow face is yellow.',s5n:'Place corners',s5d:'Move the last-layer corners to their correct spots.',s6n:'Place edges',s6d:'Cycle the last edges into place. Almost done!'});
+Object.assign(T.fil,{mth1:'⚡ Mabilis (pinakamaikli)',mth2:'🎓 Pang-aral (hakbang-hakbang)',stgN:'Yugto {n} ng 7',s0n:'Puting krus',s0d:'Gumawa ng plus sign sa puting face. Dapat tugma ang kulay ng bawat gilid sa gitna ng katabing face.',s1n:'Unang layer',s1d:'Ipasok ang apat na puting kanto para kumpleto ang puting layer.',s2n:'Ikalawang layer',s2d:'Ipasok ang apat na gilid ng gitnang layer gamit ang pattern pakanan o pakaliwa.',s3n:'Dilaw na krus',s3d:'I-flip ang mga gilid sa dilaw na face hanggang maging krus.',s4n:'Dilaw na face',s4d:'Iikot ang mga dilaw na kanto hanggang puro dilaw ang buong face.',s5n:'Iposisyon ang kanto',s5d:'Ilipat ang mga kanto ng huling layer sa tamang puwesto.',s6n:'Iposisyon ang gilid',s6d:'I-cycle ang huling mga gilid sa tamang puwesto. Malapit nang matapos!'});
+function stageUI(){const e=$('stg'),x=STG.find(z=>idx>=z.a&&idx<z.b),p=PATS.find(z=>idx>=z.a&&idx<z.b);e.hidden=!x;if(!x)return;
+  e.innerHTML=`<b>${t('stgN').replace('{n}',x.k+1)} · ${t('s'+x.k+'n')}</b><span>${t('s'+x.k+'d')}</span>`+(p?`<span style="display:block;margin-top:6px;color:var(--ac)">🔧 ${t('pn_'+p.nm)}</span>`:'')}
+function mseg(){[...$('mseg').children].forEach(b=>b.classList.toggle('on',b.dataset.m===method))}
+$('mseg').onclick=e=>{const m=e.target.dataset.m;if(!m)return;method=m;try{localStorage.setItem('cs_m',m)}catch(x){}mseg()};
+/* ===== v4: calibration, voting, stats, arrow, translations ===== */
+let buf=[];const refs={};
+const feat=([r,g,b])=>{const s=r+g+b+1;return[r/s*765,g/s*765,b/s*765,s/3*.35]};
+Object.assign(T.en,{go:'Start solve',clr:'Clear times',pn_auf:'Turn the last layer to line up the pieces',pn_co:'Corner insert (repeat until the corner drops in)',pn_pr:'Right insert for a middle edge',pn_pl:'Left insert for a middle edge',pn_y:'Cross pattern: flips the last-layer edges',pn_s:'Sune: twists the last-layer corners',pn_p:'Corner cycle: swaps three corners',pn_e:'Edge cycle: swaps three edges'});
+Object.assign(T.fil,{go:'Simulan ang solve',clr:'Burahin ang mga oras',pn_auf:'Ikutin ang huling layer para magkatapat ang mga piyesa',pn_co:'Pagpasok ng kanto (ulitin hanggang pumasok)',pn_pr:'Pagpasok sa kanan para sa gilid ng gitnang layer',pn_pl:'Pagpasok sa kaliwa para sa gilid ng gitnang layer',pn_y:'Pattern ng krus: nag-flip ng mga gilid ng huling layer',pn_s:'Sune: nag-iikot ng mga kanto ng huling layer',pn_p:'Corner cycle: nagpapalit ng tatlong kanto',pn_e:'Edge cycle: nagpapalit ng tatlong gilid'});
+const prop2=px=>{const l=px.map(p=>{const h=lt(p),v=feat(p);let k=null,bd=1e9;for(const c in refs){const d=refs[c].reduce((a,x,j)=>a+(x-v[j])**2,0);if(d<bd){bd=d;k=c}}return k&&(refs[h]||bd<3600)?k:h});l[4]=cur;return l};
+function startScan(){buf=[];clearInterval(scanT);$('cam').hidden=false;
+  scanT=setInterval(()=>{const v=$('vid');if(!v.videoWidth)return;const{px,th}=grab(v,v.videoWidth,v.videoHeight),l=prop2(px),br=px.reduce((a,p)=>a+(p[0]+p[1]+p[2])/3,0)/9;
+    [...$('gd').children].forEach((d,k)=>{d.style.background=COL[l[k]];d.textContent=cbOn?CL[l[k]]:''});
+    $('ctip').textContent=br<55?t('dark'):t('hold');if(br<55){buf=[];return}
+    buf.push(l);if(buf.length>6)buf.shift();if(buf.length<6)return;
+    const maj=l.map((_,k)=>{const c={};buf.forEach(b=>c[b[k]]=(c[b[k]]||0)+1);return Object.entries(c).sort((a,b)=>b[1]-a[1])[0]});
+    if(maj.every(e=>e[1]>=5)){clearInterval(scanT);showCfm(maj.map(e=>e[0]),th,px[4])}},250)}
+/* stats + inspection timer */
+let tms=[],pst=0,t0=0,ti=null,ins=0;try{tms=JSON.parse(localStorage.getItem('cs_times')||'[]')}catch(e){}
+const fmt=x=>x==null?'–':x.toFixed(2);
+const ao=n=>{if(tms.length<n)return null;const a=tms.slice(-n).sort((x,y)=>x-y);return a.slice(1,-1).reduce((s,x)=>s+x,0)/(n-2)};
+function stats(){$('best').textContent=`${t('best')}: ${fmt(tms.length?Math.min(...tms):null)} · Ao5: ${fmt(ao(5))} · Ao12: ${fmt(ao(12))}`;$('hist').textContent=tms.slice(-8).reverse().map(fmt).join('   ')}
+function begin(){clearInterval(ti);pst=2;t0=performance.now();ti=setInterval(()=>$('tm').textContent=((performance.now()-t0)/1000).toFixed(2),50);$('tgo').textContent='⏹ '+t('stop')}
+$('tgo').onclick=()=>{
+  if(pst===0){pst=1;ins=15;$('tm').textContent=ins;$('tgo').textContent='▶ '+t('go');ti=setInterval(()=>{ins--;if(ins<=0)begin();else $('tm').textContent=ins},1000)}
+  else if(pst===1)begin();
+  else{clearInterval(ti);const s=(performance.now()-t0)/1000;pst=0;$('tm').textContent=s.toFixed(2);tms.push(s);tms=tms.slice(-100);try{localStorage.setItem('cs_times',JSON.stringify(tms))}catch(e){}$('tgo').textContent='▶ '+t('start');stats()}};
+$('clr').onclick=()=>{tms=[];try{localStorage.removeItem('cs_times')}catch(e){}stats()};
+/* 3D arrow on the turning face */
+V.arrow=function(m){if(this.ar){this.ar.remove();this.ar=null}if(!m)return;const{a,l}=mvInfo(m),n=[0,0,0];n[a]=l;
+  const el=document.createElement('div');el.className='st ar';el.textContent=m[1]==='2'?'↻↻':m[1]==="'"?'↺':'↻';this.el.appendChild(el);this.place({p:n,n,el,off:S/2+8});this.ar=el};
+/* translate leftover English messages */
+const TR={'That isn’t a valid cube position (twisted corner, flipped edge or swapped pieces). Re-check your colours.':'Hindi valid na posisyon ng cube (may baluktot na kanto, naka-flip na gilid o magkapalit na piyesa). Tingnan ulit ang mga kulay.',
+'These colours can’t be a real cube, but it looks like some faces are entered turned sideways.':'Hindi ito posibleng totoong cube, pero mukhang may mga face na nakatagilid ang pagkaka-enter.',
+'✓ Looks like a valid cube. Compare the map with your real cube, then solve.':'✓ Mukhang valid na cube. Ihambing sa totoong cube mo, saka i-solve.',
+'Some stickers form a piece that can’t exist on a real cube (for example orange and red on one corner). The outlined stickers belong to impossible pieces. Check them, and check that each face is entered the right way up.':'May mga sticker na bumubuo ng piyesang hindi umiiral sa totoong cube (halimbawa orange at red sa iisang kanto). Tingnan ang may pulang outline, at tiyaking tama ang pagkakatayo ng bawat face.',
+'The same corner or edge piece appears twice. The outlined stickers show the duplicates, so one of them is the wrong colour or the face is turned the wrong way.':'Dalawang beses lumabas ang parehong kanto o gilid. Ang may outline ang magkapareho, kaya mali ang kulay ng isa o nakatagilid ang face.',
+'One corner looks twisted in place. Compare every corner with your real cube.':'May isang kanto na mukhang baluktot. Ihambing ang bawat kanto sa totoong cube.',
+'One edge looks flipped. Compare every edge with your real cube.':'May isang gilid na mukhang naka-flip. Ihambing ang bawat gilid sa totoong cube.',
+'Two pieces look swapped. Re-check your colours.':'May dalawang piyesang mukhang magkapalit. Tingnan ulit ang mga kulay.'};
+function trMsg(){if(lang!=='fil')return;const w=document.createTreeWalker($('msg'),NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){const d=n.data;let r=TR[d];
+  if(!r&&d.startsWith('Every colour needs exactly 9 stickers. Check: '))r='Bawat kulay ay dapat may eksaktong 9 na sticker. Tingnan: '+d.slice(46).replace(/white|red|green|yellow|orange|blue/g,x=>CF2[Object.keys(CN).find(k=>CN[k]===x)]);
+  if(!r&&d.startsWith('✨ Auto-fix: rotate '))r='✨ Auto-ayos: iikot '+d.slice(19);
+  if(r&&r!==d)n.data=r}}
+new MutationObserver(trMsg).observe($('msg'),{childList:true,characterData:true,subtree:true});
+/* ===== v5: tabs, wrong-move recovery, stage practice, tutorial, haptics, text size ===== */
+Object.assign(T.en,{nA:'Cube',nP:'Practice',nS:'Solve',wr:'↩ I made a wrong move',wrT:'Which move did you actually do? The app will solve from there.',stb:'🎯 Practise this stage',stnote:'Cube is ready for stage {n}. Choose Learn and press Solve.',tutT:'Quick start',tutD:'1) Hold the cube with white on top and green facing you. 2) Scan each face or paint on the 3D cube. 3) Check the colours, press Solve, then follow the arrow.',tutok:'Got it'});
+Object.assign(T.fil,{nA:'Cube',nP:'Practice',nS:'Solusyon',wr:'↩ Nagkamali ako ng galaw',wrT:'Anong galaw talaga ang nagawa mo? Magso-solve ang app mula roon.',stb:'🎯 Sanayin ang yugtong ito',stnote:'Handa na ang cube para sa yugto {n}. Piliin ang Pang-aral at pindutin ang Solve.',tutT:'Mabilis na gabay',tutD:'1) Hawakan ang cube na puti sa itaas at berde sa harap. 2) I-scan ang bawat face o ipinta sa 3D cube. 3) Tingnan ang mga kulay, pindutin ang I-solve, saka sundan ang arrow.',tutok:'Sige'});
+function tab(n){if(n==='S'){if(!moves.length)return;$('inp').hidden=true;$('out').hidden=false}else{stop();$('out').hidden=true;$('inp').hidden=false;$('inp').dataset.tab=n}scrollTo(0,0)}
+$('nav').onclick=e=>{const b=e.target.closest('button');if(b&&!b.disabled)tab(b.dataset.n)};
+setInterval(()=>{const n=$('out').hidden?$('inp').dataset.tab:'S';[...$('nav').children].forEach(b=>{b.classList.toggle('on',b.dataset.n===n);if(b.dataset.n==='S')b.disabled=!moves.length})},300);
+function solveFrom(x){let sol=null;STG=[];PATS=[];try{if(method==='beg'){const r=begSolveC(toCubie(x));if(r){sol=r.m;STG=r.s;PATS=r.p}}if(!sol)sol=solveFacelets(x)}catch(e){}return sol}
+$('wp').innerHTML=MN.map(m=>`<span class="chip" data-m="${m}" style="cursor:pointer">${pretty(m)}</span>`).join('');
+$('wr').onclick=()=>{const h=!$('wp').hidden;$('wp').hidden=h;$('wrt').hidden=h};
+$('wp').onclick=e=>{const m=e.target.dataset.m;if(!m)return;stop();V.inst(m);const s2=V.read(),sol=solveFrom(s2);$('wp').hidden=true;$('wrt').hidden=true;if(!sol)return;st=s2;moves=sol;idx=0;V.build(st);show()};
+const scrArr=()=>{const a=[];let l=-1;while(a.length<20){const f=Math.floor(Math.random()*6);if(l>=0&&f%3===l%3)continue;l=f;a.push(FACES_[f]+['','2',"'"][Math.floor(Math.random()*3)])}return a};
+function fillSel(){const v=$('stsel').value||'0';$('stsel').innerHTML=[0,1,2,3,4,5,6].map(k=>`<option value="${k}">${k+1}. ${t('s'+k+'n')}</option>`).join('');$('stsel').value=v}
+{const al=applyLang;applyLang=function(){al();fillSel()}}
+$('stb').onclick=()=>{const k=+$('stsel').value;P.build(solved());scrArr().forEach(m=>P.inst(m));let pre=[];
+  if(k>0){const r=begSolveC(toCubie(P.read()));if(r){const sg=r.s.find(x=>x.k>=k);pre=r.m.slice(0,sg?sg.a:r.m.length)}}
+  pre.forEach(m=>P.inst(m));st=P.read();P.build(st);samples={};thumbs={};cur='U';$('scr').textContent=t('stnote').replace('{n}',k+1);method='beg';mseg();renderFaces();refresh();tab('A')};
+try{if(!localStorage.getItem('cs_tut'))$('tut').hidden=false}catch(e){}
+$('tutok').onclick=()=>{$('tut').hidden=true;try{localStorage.setItem('cs_tut','1')}catch(e){}};
+const buzz=()=>{try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}};
+{const o=step;step=async d=>{await o(d);buzz()}}
+{const o=$('ok').onclick;$('ok').onclick=()=>{o();buzz()}}
+let fz=0;try{fz=+localStorage.getItem('cs_fs')||0}catch(e){}
+const setFz=()=>{document.body.style.fontSize=[16,18,20][fz]+'px'};setFz();
+$('fs').onclick=()=>{fz=(fz+1)%3;try{localStorage.setItem('cs_fs',fz)}catch(e){}setFz()};
+mseg();
+applyLang();
+
+</script>
+<script>if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register('sw.js').catch(function(){})</script>
+</body></html>
